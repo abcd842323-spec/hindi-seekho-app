@@ -1,0 +1,32 @@
+{
+ "background_color": "#fffaf2",
+ "description": "Learn Hindi yourself, step by step — letters, numbers, colors, daily words, phrases, flashcards and a quiz. By Mahesh Kumar.",
+ "display": "standalone",
+ "icons": [
+  {
+   "purpose": "any",
+   "sizes": "192x192",
+   "src": "icon-192.png",
+   "type": "image/png"
+  },
+  {
+   "purpose": "any",
+   "sizes": "512x512",
+   "src": "icon-512.png",
+   "type": "image/png"
+  },
+  {
+   "purpose": "maskable",
+   "sizes": "512x512",
+   "src": "icon-512.png",
+   "type": "image/png"
+  }
+ ],
+ "lang": "en",
+ "name": "Hindi Seekho App by Mahesh Kumar",
+ "orientation": "portrait",
+ "scope": "./",
+ "short_name": "Hindi Seekho",
+ "start_url": "./index.html",
+ "theme_color": "#e8760a"
+}
