@@ -319,16 +319,36 @@
       .contact-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
       .btn-whatsapp { background: #1faa55; color: #fff; }
       .btn-telegram { background: #229ed9; color: #fff; }
-      .code-form { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
-      .code-form input {
-        flex: 1 1 200px; font-size: 1.05rem; font-weight: 600; letter-spacing: 1px;
-        padding: 11px 14px; border-radius: 12px; border: 2px solid var(--line);
-        background: var(--bg); color: var(--ink); min-height: 48px; text-transform: uppercase;
+      .req-form { display: grid; gap: 12px; margin-top: 10px; max-width: 460px; text-align: left; }
+      .req-form .field { display: grid; gap: 5px; }
+      .req-form label { font-weight: 700; font-size: 0.95rem; }
+      .req-form label .opt { color: var(--ink-soft); font-weight: 500; font-size: 0.85rem; }
+      .req-form input, .req-form select {
+        font-size: 1.02rem; font-weight: 600; padding: 11px 14px; border-radius: 12px;
+        border: 2px solid var(--line); background: var(--bg); color: var(--ink);
+        min-height: 48px; width: 100%; font-family: inherit;
       }
-      .code-form input:focus { outline: none; border-color: var(--saffron); }
+      .req-form input:focus, .req-form select:focus { outline: none; border-color: var(--saffron); }
+      .req-form button { justify-self: start; }
+      .req-form button:disabled { opacity: 0.6; cursor: wait; }
       .code-msg { font-weight: 700; min-height: 1.4em; margin: 10px 0 0; }
       .code-msg.err { color: var(--red); }
       .code-msg.ok { color: var(--green-ok); }
+      .waiting-panel {
+        background: var(--surface); border: 2.5px dashed var(--teal); border-radius: 18px;
+        padding: 28px 22px; text-align: center; box-shadow: var(--shadow); max-width: 640px;
+      }
+      .waiting-panel .lock-icon { font-size: 2.4rem; line-height: 1; }
+      .waiting-panel h3 { font-family: "Baloo 2", sans-serif; margin: 10px 0 6px; font-size: 1.3rem; color: var(--teal-deep); }
+      .waiting-panel p { color: var(--ink-soft); margin: 0 auto 14px; max-width: 46ch; }
+      .waiting-panel .waiting-detail { font-weight: 700; color: var(--ink); }
+      .waiting-panel .contact-row { justify-content: center; }
+      .rejected-panel {
+        background: var(--red-soft); border: 2px solid var(--red); border-radius: 18px;
+        padding: 24px; max-width: 640px;
+      }
+      .rejected-panel h3 { font-family: "Baloo 2", sans-serif; margin: 0 0 6px; font-size: 1.3rem; color: var(--red); }
+      .rejected-panel p { margin: 0 0 14px; }
       .unlock-note { font-size: 0.88rem; color: var(--ink-soft); margin-top: 14px; }
       .unlock-done {
         background: var(--green-soft); border: 2px solid var(--green-ok); border-radius: 18px;
@@ -579,23 +599,67 @@
             </li>
             <li>
               <span class="step-title">Step 2 — Send the payment screenshot</span>
-              Send the screenshot of your payment on WhatsApp or Telegram, and tell us which plan you chose — ₹500, ₹1,500 or ₹20,000. After checking, you will receive the unlock code for your plan there. Video-call and Monthly Live plan buyers also fix their class times on WhatsApp.
+              Send the screenshot of your payment on WhatsApp or Telegram, and tell us which plan you chose — ₹500, ₹1,500 or ₹20,000. Then fill the approval form in Step 3 below — Mahesh Kumar checks your payment and approves your request. Video-call and Monthly Live plan buyers also fix their class times on WhatsApp.
               <span class="contact-row">
                 <a class="btn btn-whatsapp" href="https://wa.me/918543083014" target="_blank" rel="noopener">💬 WhatsApp — 8543083014</a>
                 <a class="btn btn-telegram" href="https://t.me/Akhandsingale420" target="_blank" rel="noopener">✈️ Telegram</a>
               </span>
             </li>
             <li>
-              <span class="step-title">Step 3 — Enter your unlock code</span>
-              Type the code you received and tap Unlock — every lesson opens right away.
-              <form class="code-form" id="code-form">
-                <input id="code-input" type="text" placeholder="Enter unlock code" autocomplete="off" aria-label="Unlock code" />
-                <button class="btn btn-primary" type="submit">🔓 Unlock</button>
+              <span class="step-title">Step 3 — Request approval</span>
+              Fill your details and tap <strong>Request Approval</strong>. As soon as Mahesh Kumar approves your payment, the full app opens automatically on this device — no code needed.
+              <form class="req-form" id="req-form">
+                <div class="field">
+                  <label for="req-name">Your name</label>
+                  <input id="req-name" type="text" placeholder="e.g. Priya Sharma" autocomplete="name" />
+                </div>
+                <div class="field">
+                  <label for="req-phone">WhatsApp number</label>
+                  <input id="req-phone" type="tel" placeholder="e.g. 98765 43210" autocomplete="tel" />
+                </div>
+                <div class="field">
+                  <label for="req-email">Gmail</label>
+                  <input id="req-email" type="email" placeholder="e.g. priya@gmail.com" autocomplete="email" />
+                </div>
+                <div class="field">
+                  <label for="req-plan">Plan you paid for</label>
+                  <select id="req-plan">
+                    <option value="Rs 500 - SMS Support">₹500 — SMS / WhatsApp Support (one-time)</option>
+                    <option value="Rs 1500 - Video Call Support">₹1,500 — Video Call Support (one-time)</option>
+                    <option value="Rs 20000 - Monthly Live Plan">₹20,000 — Monthly Live Plan (per month)</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="req-txn">UPI transaction ID <span class="opt">(optional)</span></label>
+                  <input id="req-txn" type="text" placeholder="Transaction / UPI Ref ID, if you have it" autocomplete="off" />
+                </div>
+                <button class="btn btn-primary" type="submit" id="req-submit">Request Approval</button>
               </form>
-              <p class="code-msg" id="code-msg" role="status"></p>
+              <p class="code-msg" id="req-msg" role="status"></p>
             </li>
           </ol>
-          <p class="unlock-note">Note: the unlock stays active while this page is open on your phone or computer. If you close the page, just enter the same code again — one code works for you every time, no need to pay again.</p>
+          <p class="unlock-note">Note: your approval is linked to this phone / browser. Once approved, the app opens automatically whenever you open it on this device. If you change your phone or browser, just message Mahesh Kumar on WhatsApp and he will approve your new device — no need to pay again.</p>
+        </div>
+
+        <div class="waiting-panel" id="waiting-panel" hidden>
+          <div class="lock-icon">⏳</div>
+          <h3>Request sent — waiting for approval</h3>
+          <p class="waiting-detail" id="waiting-detail"></p>
+          <p>Mahesh Kumar will check your payment screenshot on WhatsApp / Telegram and approve your request. The full app will open <strong>automatically</strong> on this device as soon as you are approved — you can keep this page open, or close it and come back later on the same device.</p>
+          <p>Not sent your payment screenshot yet? Send it now so your approval is not delayed:</p>
+          <span class="contact-row">
+            <a class="btn btn-whatsapp" href="https://wa.me/918543083014" target="_blank" rel="noopener">💬 WhatsApp — 8543083014</a>
+            <a class="btn btn-telegram" href="https://t.me/Akhandsingale420" target="_blank" rel="noopener">✈️ Telegram</a>
+          </span>
+        </div>
+
+        <div class="rejected-panel" id="rejected-panel" hidden>
+          <h3>Your request could not be approved</h3>
+          <p>Sorry — your access request was not approved. This usually happens when the payment screenshot was not received or the payment could not be matched. Please contact Mahesh Kumar (Ram) on WhatsApp — he will check your payment and help you right away.</p>
+          <div class="cta-row">
+            <a class="btn btn-whatsapp" href="https://wa.me/918543083014" target="_blank" rel="noopener">💬 WhatsApp — 8543083014</a>
+            <button class="btn btn-ghost" type="button" id="req-again">Send request again</button>
+          </div>
         </div>
 
         <div class="unlock-done" id="unlock-done" hidden>
@@ -611,7 +675,7 @@
 
       <div class="blogger-note">
         <h3>For the blog 📝</h3>
-        <p>Link this app from a Blogger post (for example: “Learn Hindi Yourself — Hindi Seekho App”): readers try Lessons 1–2 free right here, and the full app unlocks with a plan — ₹500 with SMS/WhatsApp support, ₹1,500 with 2 live video calls (30 min each), or ₹20,000/month with a live 30-minute class every day for a month — paid by UPI, payment screenshot on WhatsApp/Telegram, then an unlock code, the same simple flow as the Good Morning Kids pack.</p>
+        <p>Link this app from a Blogger post (for example: “Learn Hindi Yourself — Hindi Seekho App”): readers try Lessons 1–2 free right here, and the full app unlocks with a plan — ₹500 with SMS/WhatsApp support, ₹1,500 with 2 live video calls (30 min each), or ₹20,000/month with a live 30-minute class every day for a month — paid by UPI, payment screenshot on WhatsApp/Telegram, then the student requests approval inside the app and Mahesh Kumar approves it — the full app unlocks automatically, no code needed.</p>
       </div>
 
       <footer>
@@ -640,6 +704,11 @@
         });
       }
     </script>
+
+    <!-- Firebase JS SDK (compat) — approval system -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
     <script>
       /* ================= DATA ================= */
@@ -1043,12 +1112,13 @@
       }
       buildQuiz();
 
-      /* ================= PAID UNLOCK ================= */
-      var UNLOCK_CODES = {
-        "HINDI500": "₹500 plan — full app + SMS/WhatsApp support. Doubt ho to WhatsApp par message kar dena!",
-        "HINDI1500": "₹1,500 plan — full app + SMS/WhatsApp support + live video call support. Apna video call time WhatsApp par fix kar lena!",
-        "HINDI20000": "₹20,000 Monthly Live Plan — full app + SMS/WhatsApp support + a 30-minute live video class every day for one month (morning or evening, as scheduled). Apna roz ka class time WhatsApp par fix kar lena!"
-      };
+      /* ================= PAID ACCESS: FIREBASE APPROVAL =================
+         No unlock codes. The buyer pays by UPI, sends the screenshot on
+         WhatsApp/Telegram, then requests approval here. The request is
+         saved to Firestore (collection "accessRequests", doc ID = the
+         buyer's anonymous Auth UID). Mahesh Kumar sets status to
+         "approved" / "rejected" in the Firebase console; the app listens
+         to its own document and unlocks automatically on approval. */
       document.getElementById("copy-upi").addEventListener("click", function () {
         var id = "8543083014@mbk";
         function done() { toast("UPI ID copied: " + id); }
@@ -1056,22 +1126,129 @@
           navigator.clipboard.writeText(id).then(done, function () { toast("UPI ID: " + id); });
         } else { toast("UPI ID: " + id); }
       });
-      document.getElementById("code-form").addEventListener("submit", function (ev) {
-        ev.preventDefault();
-        var val = document.getElementById("code-input").value.replace(/\s+/g, "").toUpperCase();
-        var msg = document.getElementById("code-msg");
-        if (UNLOCK_CODES[val]) {
+
+      var accessCard = document.getElementById("unlock-card");
+      var waitingPanel = document.getElementById("waiting-panel");
+      var rejectedPanel = document.getElementById("rejected-panel");
+      var donePanel = document.getElementById("unlock-done");
+      function showAccessState(state) {
+        accessCard.hidden = state !== "form";
+        waitingPanel.hidden = state !== "waiting";
+        rejectedPanel.hidden = state !== "rejected";
+        donePanel.hidden = state !== "done";
+      }
+
+      var fbDb = null;
+      var fbUid = null;
+      var fbListening = false;
+
+      function applyAccess(data) {
+        if (!data) {
+          if (!document.body.classList.contains("unlocked")) showAccessState("form");
+          return;
+        }
+        if (data.status === "approved") {
+          var wasUnlocked = document.body.classList.contains("unlocked");
           document.body.classList.add("unlocked");
-          document.getElementById("unlock-card").hidden = true;
-          document.getElementById("unlock-done").hidden = false;
-          document.getElementById("unlock-plan-line").textContent = "Your plan: " + UNLOCK_CODES[val];
-          msg.textContent = "";
-          toast("✅ App unlocked! All lessons are open now.");
-          document.getElementById("unlock-done").scrollIntoView({ behavior: "smooth", block: "center" });
+          showAccessState("done");
+          document.getElementById("unlock-plan-line").textContent =
+            "Your plan: " + (data.plan || "") + " — approved by Mahesh Kumar. Doubt ho to WhatsApp par message kar dena; video call / live class ka time bhi WhatsApp par hi fix hoga.";
+          if (!wasUnlocked) toast("✅ Approved! The full app is now unlocked.");
+        } else if (data.status === "rejected") {
+          showAccessState("rejected");
         } else {
-          msg.textContent = "❌ This code is not correct. Please check the code you received after your payment screenshot was approved.";
+          showAccessState("waiting");
+          document.getElementById("waiting-detail").textContent =
+            "Name: " + (data.name || "") + " · Plan: " + (data.plan || "");
+        }
+      }
+
+      function startAccessListener() {
+        if (!fbDb || !fbUid || fbListening) return;
+        fbListening = true;
+        fbDb.collection("accessRequests").doc(fbUid).onSnapshot(function (snap) {
+          applyAccess(snap.exists ? snap.data() : null);
+        }, function () {
+          /* Listener failed (offline / rules) — the form stays usable. */
+          fbListening = false;
+        });
+      }
+
+      try {
+        if (typeof firebase !== "undefined" && firebase.initializeApp) {
+          firebase.initializeApp({
+            apiKey: "AIzaSyBwPT-AfPvxH3AbEJ8IMPDVFwieZfvv-yg",
+            authDomain: "good-morning-kids-17b08.firebaseapp.com",
+            projectId: "good-morning-kids-17b08",
+            storageBucket: "good-morning-kids-17b08.firebasestorage.app",
+            messagingSenderId: "805083378699",
+            appId: "1:805083378699:web:a904d43f2cd2933aedc30e"
+          });
+          fbDb = firebase.firestore();
+          firebase.auth().onAuthStateChanged(function (user) {
+            if (user) {
+              fbUid = user.uid;
+              startAccessListener();
+            } else {
+              firebase.auth().signInAnonymously().catch(function () {
+                /* Anonymous sign-in failed — form submit will report it. */
+              });
+            }
+          });
+        }
+      } catch (e) {
+        /* Firebase unavailable — free lessons keep working regardless. */
+        fbDb = null;
+      }
+
+      document.getElementById("req-form").addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        var msg = document.getElementById("req-msg");
+        var name = document.getElementById("req-name").value.replace(/\s+/g, " ").trim();
+        var phone = document.getElementById("req-phone").value.replace(/[\s\-()]/g, "");
+        var email = document.getElementById("req-email").value.replace(/\s+/g, "").trim();
+        var plan = document.getElementById("req-plan").value;
+        var txnId = document.getElementById("req-txn").value.replace(/\s+/g, " ").trim();
+        function fail(text) {
+          msg.textContent = text;
           msg.className = "code-msg err";
         }
+        if (name.length < 2) { fail("Please enter your name."); return; }
+        if (phone.replace(/\D/g, "").length < 10) { fail("Please enter a valid WhatsApp number (at least 10 digits)."); return; }
+        if (email.indexOf("@") < 1 || email.indexOf(".") < email.indexOf("@") + 2 || email.lastIndexOf(".") >= email.length - 1) { fail("Please enter a valid Gmail address (e.g. priya@gmail.com)."); return; }
+        if (!fbDb || !fbUid) {
+          fail("Connecting to the approval system… please check your internet connection and tap Request Approval again in a few seconds.");
+          return;
+        }
+        var btn = document.getElementById("req-submit");
+        btn.disabled = true;
+        btn.textContent = "Sending request…";
+        msg.textContent = "";
+        fbDb.collection("accessRequests").doc(fbUid).set({
+          name: name,
+          phone: phone,
+          email: email,
+          plan: plan,
+          txnId: txnId,
+          status: "pending",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(function () {
+          btn.disabled = false;
+          btn.textContent = "Request Approval";
+          showAccessState("waiting");
+          document.getElementById("waiting-detail").textContent = "Name: " + name + " · Plan: " + plan;
+          toast("✅ Request sent! Approval ka wait karo — app apne aap khul jayega.");
+          waitingPanel.scrollIntoView({ behavior: "smooth", block: "center" });
+        }).catch(function () {
+          btn.disabled = false;
+          btn.textContent = "Request Approval";
+          fail("Your request could not be sent. Please check your internet connection and try again — or message Mahesh Kumar on WhatsApp.");
+        });
+      });
+
+      document.getElementById("req-again").addEventListener("click", function () {
+        showAccessState("form");
+        accessCard.scrollIntoView({ behavior: "smooth", block: "center" });
       });
 
       /* ================= NAV HIGHLIGHT ================= */
