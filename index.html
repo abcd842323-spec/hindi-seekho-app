@@ -253,6 +253,7 @@
       .quiz-progress { font-weight: 700; color: var(--ink-soft); font-size: 0.92rem; margin-bottom: 8px; }
       .quiz-q { font-size: 1.15rem; margin: 0 0 4px; }
       .quiz-q .q-dev { font-family: "Baloo 2", sans-serif; font-size: 2.2rem; font-weight: 800; color: var(--saffron-deep); display: block; margin: 8px 0 2px; }
+      .quiz-q .q-dev.long { font-size: 1.5rem; line-height: 1.35; }
       .quiz-q .q-rom { font-weight: 700; color: var(--teal-deep); }
       .quiz-opts { display: grid; gap: 10px; margin-top: 16px; }
       .quiz-opt {
@@ -534,7 +535,7 @@
       <!-- QUIZ -->
       <section class="lesson" id="quiz">
         <div class="sec-head"><h2>Test Yourself · Quiz <span class="dev">परीक्षा</span></h2><span class="pill pill-free">FREE</span></div>
-        <p class="sec-sub">10 questions from everything above. Pick an answer — you will know right away if it is correct.</p>
+        <p class="sec-sub">10 questions from everything above — plus animal words and fun GK questions. Pick an answer — you will know right away if it is correct.</p>
         <div class="quiz-box" id="quiz-box"></div>
       </section>
 
@@ -1029,6 +1030,47 @@
       });
       PHRASES.forEach(function (p) { QUIZ_POOL.push({ dev: p.d, rom: p.r, ans: p.e, say: p.d }); });
 
+      /* ---------- Quiz extras: Animals ----------
+         Same style as the word questions — Hindi word, English meaning.
+         Most of these already reach the pool through the Animals word
+         set in Lesson 4, so only the missing ones are added here
+         (no duplicate questions in a round). */
+      var QUIZ_ANIMALS = [
+        { d: "कुत्ता", r: "kutta", e: "Dog" }, { d: "बिल्ली", r: "billi", e: "Cat" },
+        { d: "हाथी", r: "haathi", e: "Elephant" }, { d: "शेर", r: "sher", e: "Lion" },
+        { d: "बंदर", r: "bandar", e: "Monkey" }, { d: "घोड़ा", r: "ghoda", e: "Horse" },
+        { d: "गाय", r: "gaay", e: "Cow" }, { d: "बकरी", r: "bakri", e: "Goat" },
+        { d: "चूहा", r: "chuha", e: "Mouse" }, { d: "तोता", r: "tota", e: "Parrot" }
+      ];
+      QUIZ_ANIMALS.forEach(function (w) {
+        var already = false;
+        for (var i = 0; i < QUIZ_POOL.length; i++) {
+          if (QUIZ_POOL[i].dev === w.d) { already = true; break; }
+        }
+        if (!already) QUIZ_POOL.push({ dev: w.d, rom: w.r, ans: w.e, say: w.d });
+      });
+
+      /* ---------- Quiz extras: GK for kids ----------
+         Question-and-answer style: the question itself is shown
+         (Devanagari + Roman). Each GK question carries its own wrong
+         options, so GK distractors always come from GK answers only —
+         never from animal / word answers. */
+      var GK_QUESTIONS = [
+        { dev: "भारत की राजधानी क्या है?", rom: "Bharat ki rajdhani kya hai?", ans: "New Delhi", wrong: ["Mumbai", "Agra", "Jaipur"] },
+        { dev: "ताज महल कहाँ है?", rom: "Taj Mahal kahan hai?", ans: "Agra", wrong: ["Delhi", "Jaipur", "Mumbai"] },
+        { dev: "सूरज किस दिशा में उगता है?", rom: "Suraj kis disha me ugta hai?", ans: "East", wrong: ["West", "North", "South"] },
+        { dev: "हफ्ते में कितने दिन होते हैं?", rom: "Hafte me kitne din hote hain?", ans: "7", wrong: ["5", "6", "8"] },
+        { dev: "साल में कितने महीने होते हैं?", rom: "Saal me kitne mahine hote hain?", ans: "12", wrong: ["10", "11", "13"] },
+        { dev: "इंद्रधनुष में कितने रंग होते हैं?", rom: "Indradhanush me kitne rang hote hain?", ans: "7", wrong: ["5", "6", "8"] },
+        { dev: "आसमान का रंग क्या है?", rom: "Aasman ka rang kya hai?", ans: "Blue", wrong: ["Green", "Red", "Yellow"] },
+        { dev: "दूध हमें किससे मिलता है?", rom: "Doodh humein kisse milta hai?", ans: "Cow", wrong: ["Goat", "Horse", "Dog"] },
+        { dev: "भारत का राष्ट्रीय पक्षी कौन है?", rom: "Bharat ka rashtriya pakshi kaun hai?", ans: "Peacock", wrong: ["Parrot", "Pigeon", "Owl"] },
+        { dev: "ट्रैफिक लाइट में कितने रंग होते हैं?", rom: "Traffic light me kitne rang hote hain?", ans: "3", wrong: ["2", "4", "5"] }
+      ];
+      GK_QUESTIONS.forEach(function (g) {
+        QUIZ_POOL.push({ type: "gk", dev: g.dev, rom: g.rom, ans: g.ans, wrong: g.wrong, say: g.dev });
+      });
+
       var quizBox = document.getElementById("quiz-box");
       var quizQuestions = [], quizPos = 0, quizScore = 0;
 
@@ -1043,13 +1085,20 @@
         var pool = shuffleArr(QUIZ_POOL.slice());
         quizQuestions = pool.slice(0, 10).map(function (q) {
           var wrongs = [];
-          var guard = 0;
-          while (wrongs.length < 3 && guard < 60) {
-            guard++;
-            var cand = QUIZ_POOL[Math.floor(Math.random() * QUIZ_POOL.length)].ans;
-            if (cand !== q.ans && wrongs.indexOf(cand) === -1) wrongs.push(cand);
+          if (q.type === "gk") {
+            /* GK questions use only their own GK wrong options. */
+            wrongs = q.wrong.slice();
+          } else {
+            var guard = 0;
+            while (wrongs.length < 3 && guard < 60) {
+              guard++;
+              var candQ = QUIZ_POOL[Math.floor(Math.random() * QUIZ_POOL.length)];
+              if (candQ.type === "gk") continue;
+              var cand = candQ.ans;
+              if (cand !== q.ans && wrongs.indexOf(cand) === -1) wrongs.push(cand);
+            }
           }
-          return { dev: q.dev, rom: q.rom, say: q.say, options: shuffleArr([q.ans].concat(wrongs)), correct: q.ans };
+          return { type: q.type || "word", dev: q.dev, rom: q.rom, say: q.say, options: shuffleArr([q.ans].concat(wrongs)), correct: q.ans };
         });
         quizPos = 0; quizScore = 0;
         renderQuizQuestion();
@@ -1063,7 +1112,11 @@
         quizBox.appendChild(prog);
         var h = document.createElement("p");
         h.className = "quiz-q";
-        h.innerHTML = 'What does this mean in English?<span class="q-dev">' + q.dev + '</span><span class="q-rom">' + q.rom + '</span>';
+        if (q.type === "gk") {
+          h.innerHTML = '<span class="q-dev long">' + q.dev + '</span><span class="q-rom">' + q.rom + '</span>';
+        } else {
+          h.innerHTML = 'What does this mean in English?<span class="q-dev">' + q.dev + '</span><span class="q-rom">' + q.rom + '</span>';
+        }
         quizBox.appendChild(h);
         var hearBtn = document.createElement("button");
         hearBtn.className = "btn btn-ghost btn-small";
@@ -1089,11 +1142,15 @@
             }
             if (opt === q.correct) {
               quizScore++;
-              fb.textContent = "✅ Sahi jawab! (Correct!) — " + q.dev + " means “" + q.correct + "”.";
+              fb.textContent = q.type === "gk"
+                ? "✅ Sahi jawab! (Correct!) — Jawab hai: “" + q.correct + "”."
+                : "✅ Sahi jawab! (Correct!) — " + q.dev + " means “" + q.correct + "”.";
               fb.className = "quiz-feedback good";
             } else {
               b.classList.add("wrong");
-              fb.textContent = "❌ Not quite. " + q.dev + " means “" + q.correct + "”.";
+              fb.textContent = q.type === "gk"
+                ? "❌ Not quite. Sahi jawab hai: “" + q.correct + "”."
+                : "❌ Not quite. " + q.dev + " means “" + q.correct + "”.";
               fb.className = "quiz-feedback bad";
             }
             speak(q.say);
