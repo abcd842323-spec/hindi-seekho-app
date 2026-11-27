@@ -262,25 +262,38 @@
       .quiz-actions { margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; }
       .quiz-score-big { font-family: "Baloo 2", sans-serif; font-size: 2.4rem; font-weight: 800; color: var(--saffron-deep); }
 
-      /* ---------- Paid / lock ---------- */
+      /* ---------- Pills + lesson finish ---------- */
       .pill {
         font-family: "Hind", sans-serif; font-size: 0.78rem; font-weight: 700;
         border-radius: 999px; padding: 4px 12px; vertical-align: middle;
       }
       .pill-free { background: var(--green-soft); color: var(--green-ok); border: 1.5px solid var(--green-ok); }
-      .pill-lock { background: var(--saffron-soft); color: var(--saffron-deep); border: 1.5px solid var(--saffron); }
-      body:not(.unlocked) .locked-content { display: none; }
-      body.unlocked .lock-panel { display: none; }
-      body.unlocked .pill-lock { display: none; }
-      .lock-panel {
-        background: var(--surface); border: 2.5px dashed var(--saffron); border-radius: 18px;
-        padding: 28px 22px; text-align: center; box-shadow: var(--shadow); max-width: 560px;
+      .lesson-done-bar { margin-top: 26px; display: flex; justify-content: center; }
+
+      /* ---------- In-between ad box (free users only) ---------- */
+      .adx-overlay {
+        position: fixed; inset: 0; z-index: 200;
+        background: rgba(20, 12, 4, 0.62);
+        display: flex; align-items: center; justify-content: center; padding: 16px;
       }
-      .lock-panel .lock-icon { font-size: 2.4rem; line-height: 1; }
-      .lock-panel h3 { font-family: "Baloo 2", sans-serif; margin: 10px 0 6px; font-size: 1.3rem; }
-      .lock-panel p { color: var(--ink-soft); margin: 0 auto 16px; max-width: 44ch; }
-      .lock-panel .price-line { font-size: 1.05rem; color: var(--ink); }
-      .lock-panel .price-line strong { color: var(--saffron-deep); font-size: 1.3rem; }
+      .adx-overlay[hidden] { display: none; }
+      .adx-modal {
+        position: relative; background: var(--surface); border: 2px solid var(--line);
+        border-radius: 18px; padding: 24px; max-width: 520px; width: 100%;
+        max-height: 92vh; overflow-y: auto; box-shadow: var(--shadow-lg); text-align: center;
+      }
+      .adx-modal h3 { font-family: "Baloo 2", sans-serif; margin: 0 30px 6px; font-size: 1.35rem; }
+      .adx-note { color: var(--ink-soft); margin: 0 auto 4px; max-width: 46ch; font-size: 0.97rem; }
+      .adx-x {
+        position: absolute; top: 10px; right: 10px; width: 38px; height: 38px; min-height: 38px;
+        border-radius: 50%; border: 2px solid var(--line); background: var(--surface-2);
+        color: var(--ink); font-size: 1rem; line-height: 1;
+      }
+      .adx-adbox {
+        background: var(--surface-2); border: 1.5px dashed var(--saffron); border-radius: 12px;
+        padding: 12px; min-height: 110px; margin: 14px 0 18px; overflow: hidden;
+      }
+      .adx-adnote { font-size: 0.82rem; color: var(--ink-soft); margin: 8px 0 0; }
 
       /* ---------- Plans ---------- */
       .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; max-width: 980px; margin-bottom: 18px; }
@@ -412,7 +425,7 @@
           <h1>Learn Hindi yourself,
             <span class="hindi-line dev">आसानी से हिंदी सीखो</span>
           </h1>
-          <p class="lede">No teacher needed. Start with the letters, hear every sound, learn daily words and phrases, then test yourself with flashcards and a quiz — all at your own speed. <strong>Lessons 1 and 2 are completely free</strong>; the full app unlocks with personal support — <strong>₹500</strong> with SMS/WhatsApp support, or <strong>₹1,500</strong> with 2 live video calls (30 min each), or <strong>₹20,000/month</strong> with a live 30-minute class every day for a month.</p>
+          <p class="lede">No teacher needed. Start with the letters, hear every sound, learn daily words and phrases, then test yourself with flashcards and a quiz — all at your own speed. <strong>Poori app bilkul FREE hai</strong> — saare lessons, flashcards aur quiz sabke liye khule hain; free me seekhte time beech-beech me chhote ads aayenge, unhi se app free chalti hai. Ads band karke personal support chahiye to plans hain — <strong>₹500</strong> with SMS/WhatsApp support, <strong>₹1,500</strong> with 2 live video calls (30 min each), or <strong>₹20,000/month</strong> with a live 30-minute class every day for a month.</p>
           <div class="cta-row">
             <a class="btn btn-primary" href="#letters">Start Free Lessons</a>
             <a class="btn btn-ghost" href="#unlock">See Plans &amp; Prices</a>
@@ -446,6 +459,7 @@
         <div class="grid-letters" id="vowels"></div>
         <h3 class="subhead">Consonants — व्यंजन (Vyanjan)</h3>
         <div class="grid-letters" id="consonants"></div>
+        <div class="lesson-done-bar"><button class="btn btn-primary lesson-next-btn" type="button" data-next="#numbers">✓ Lesson Khatam — Agla Lesson: Numbers →</button></div>
       </section>
 
       <!-- LESSON 2: NUMBERS -->
@@ -453,65 +467,38 @@
         <div class="sec-head"><h2>Lesson 2 · Numbers 1–20 <span class="dev">गिनती</span></h2><span class="pill pill-free">FREE</span></div>
         <p class="sec-sub">Counting in Hindi. Each card shows the number, the Hindi numeral, and how to say it. Tap to hear.</p>
         <div class="grid-nums" id="numbers-grid"></div>
+        <div class="lesson-done-bar"><button class="btn btn-primary lesson-next-btn" type="button" data-next="#colors">✓ Lesson Khatam — Agla Lesson: Colors →</button></div>
       </section>
 
       <!-- LESSON 3: COLORS -->
       <section class="lesson" id="colors">
-        <div class="sec-head"><h2>Lesson 3 · Colors <span class="dev">रंग</span></h2><span class="pill pill-lock">🔒 Paid</span></div>
+        <div class="sec-head"><h2>Lesson 3 · Colors <span class="dev">रंग</span></h2><span class="pill pill-free">FREE</span></div>
         <p class="sec-sub">The most common colors, with the color shown on every card. Tap to hear the Hindi name.</p>
-        <div class="lock-panel">
-          <div class="lock-icon">🔒</div>
-          <h3>This lesson is locked</h3>
-          <p class="price-line">Unlock the full app — <strong>₹500</strong> with SMS/WhatsApp support, <strong>₹1,500</strong> with 2 live video calls (30 min each), or <strong>₹20,000/month</strong> with a live 30-minute class every day for a month. All lessons, 105 flashcards and the quiz are included in every plan.</p>
-          <p>Lessons 1 and 2 above are free, so you can try the app first.</p>
-          <a class="btn btn-primary" href="#unlock">See Plans &amp; Prices</a>
-        </div>
-        <div class="locked-content"><div class="grid-words" id="colors-grid"></div></div>
+        <div class="grid-words" id="colors-grid"></div>
+        <div class="lesson-done-bar"><button class="btn btn-primary lesson-next-btn" type="button" data-next="#words">✓ Lesson Khatam — Agla Lesson: Daily Words →</button></div>
       </section>
 
       <!-- LESSON 4: WORDS -->
       <section class="lesson" id="words">
-        <div class="sec-head"><h2>Lesson 4 · Daily Words <span class="dev">रोज़ के शब्द</span></h2><span class="pill pill-lock">🔒 Paid</span></div>
+        <div class="sec-head"><h2>Lesson 4 · Daily Words <span class="dev">रोज़ के शब्द</span></h2><span class="pill pill-free">FREE</span></div>
         <p class="sec-sub">Words you will use every day — family, animals, food and the body. Pick a topic, then tap any word to hear it.</p>
-        <div class="lock-panel">
-          <div class="lock-icon">🔒</div>
-          <h3>This lesson is locked</h3>
-          <p class="price-line">Unlock the full app — <strong>₹500</strong> with SMS/WhatsApp support, <strong>₹1,500</strong> with 2 live video calls (30 min each), or <strong>₹20,000/month</strong> with a live 30-minute class every day for a month. All lessons, 105 flashcards and the quiz are included in every plan.</p>
-          <p>Lessons 1 and 2 above are free, so you can try the app first.</p>
-          <a class="btn btn-primary" href="#unlock">See Plans &amp; Prices</a>
-        </div>
-        <div class="locked-content">
           <div class="tabs" id="word-tabs" role="tablist"></div>
           <div class="grid-words" id="words-grid"></div>
-        </div>
+        <div class="lesson-done-bar"><button class="btn btn-primary lesson-next-btn" type="button" data-next="#phrases">✓ Lesson Khatam — Agla Lesson: Sentences →</button></div>
       </section>
 
       <!-- LESSON 5: PHRASES -->
       <section class="lesson" id="phrases">
-        <div class="sec-head"><h2>Lesson 5 · Speak Full Sentences <span class="dev">वाक्य</span></h2><span class="pill pill-lock">🔒 Paid</span></div>
+        <div class="sec-head"><h2>Lesson 5 · Speak Full Sentences <span class="dev">वाक्य</span></h2><span class="pill pill-free">FREE</span></div>
         <p class="sec-sub">Ready-made phrases for real conversation. Tap a phrase to hear the whole sentence, then repeat it aloud yourself.</p>
-        <div class="lock-panel">
-          <div class="lock-icon">🔒</div>
-          <h3>This lesson is locked</h3>
-          <p class="price-line">Unlock the full app — <strong>₹500</strong> with SMS/WhatsApp support, <strong>₹1,500</strong> with 2 live video calls (30 min each), or <strong>₹20,000/month</strong> with a live 30-minute class every day for a month. All lessons, 105 flashcards and the quiz are included in every plan.</p>
-          <p>Lessons 1 and 2 above are free, so you can try the app first.</p>
-          <a class="btn btn-primary" href="#unlock">See Plans &amp; Prices</a>
-        </div>
-        <div class="locked-content"><div class="phrase-list" id="phrases-list"></div></div>
+        <div class="phrase-list" id="phrases-list"></div>
+        <div class="lesson-done-bar"><button class="btn btn-primary lesson-next-btn" type="button" data-next="#flashcards">✓ Lesson Khatam — Ab Flashcards se Practice Karo →</button></div>
       </section>
 
       <!-- FLASHCARDS -->
       <section class="lesson" id="flashcards">
-        <div class="sec-head"><h2>Practice · Flashcards <span class="dev">अभ्यास</span></h2><span class="pill pill-lock">🔒 Paid</span></div>
+        <div class="sec-head"><h2>Practice · Flashcards <span class="dev">अभ्यास</span></h2><span class="pill pill-free">FREE</span></div>
         <p class="sec-sub">See the Hindi, guess the meaning in your head, then tap the card to flip and check. Use Shuffle to mix the deck.</p>
-        <div class="lock-panel">
-          <div class="lock-icon">🔒</div>
-          <h3>Flashcards are locked</h3>
-          <p class="price-line">Unlock the full app — <strong>₹500</strong> with SMS/WhatsApp support, <strong>₹1,500</strong> with 2 live video calls (30 min each), or <strong>₹20,000/month</strong> with a live 30-minute class every day for a month. All lessons, 105 flashcards and the quiz are included in every plan.</p>
-          <p>Lessons 1 and 2 above are free, so you can try the app first.</p>
-          <a class="btn btn-primary" href="#unlock">See Plans &amp; Prices</a>
-        </div>
-        <div class="locked-content">
         <div class="flash-zone">
           <button class="flashcard" id="flashcard" aria-label="Flashcard — tap to flip">
             <span class="flash-inner">
@@ -535,34 +522,26 @@
             <button class="btn btn-primary btn-small" id="flash-shuffle">🔀 Shuffle</button>
           </div>
         </div>
-        </div>
       </section>
 
       <!-- QUIZ -->
       <section class="lesson" id="quiz">
-        <div class="sec-head"><h2>Test Yourself · Quiz <span class="dev">परीक्षा</span></h2><span class="pill pill-lock">🔒 Paid</span></div>
+        <div class="sec-head"><h2>Test Yourself · Quiz <span class="dev">परीक्षा</span></h2><span class="pill pill-free">FREE</span></div>
         <p class="sec-sub">10 questions from everything above. Pick an answer — you will know right away if it is correct.</p>
-        <div class="lock-panel">
-          <div class="lock-icon">🔒</div>
-          <h3>The quiz is locked</h3>
-          <p class="price-line">Unlock the full app — <strong>₹500</strong> with SMS/WhatsApp support, <strong>₹1,500</strong> with 2 live video calls (30 min each), or <strong>₹20,000/month</strong> with a live 30-minute class every day for a month. All lessons, 105 flashcards and the quiz are included in every plan.</p>
-          <p>Lessons 1 and 2 above are free, so you can try the app first.</p>
-          <a class="btn btn-primary" href="#unlock">See Plans &amp; Prices</a>
-        </div>
-        <div class="locked-content"><div class="quiz-box" id="quiz-box"></div></div>
+        <div class="quiz-box" id="quiz-box"></div>
       </section>
 
       <!-- UNLOCK -->
       <section class="lesson" id="unlock">
-        <div class="sec-head"><h2>Unlock the Full App <span class="dev">पूरा ऐप खोलो</span></h2></div>
-        <p class="sec-sub">Lessons 1 (Letters) and 2 (Numbers) are free for everyone. Choose a plan to open everything — Colors, Daily Words, Sentences, all 105 Flashcards and the Quiz — and get personal support from <strong>Mahesh Kumar</strong>. The ₹500 and ₹1,500 plans are one-time payments; the Monthly Live Plan is ₹20,000 per month with a live class every day. Choose the plan that suits you:</p>
+        <div class="sec-head"><h2>Plans — Bina Ads ke Seekho <span class="dev">प्लान</span></h2></div>
+        <p class="sec-sub">Poori app — saare lessons, 105 flashcards aur quiz — sabke liye bilkul free hai. Free me seekhte time beech-beech me chhote ads dikhte hain, unhi se app free chalti hai. Plan lene se <strong>ads hamesha ke liye band</strong> ho jate hain aur <strong>Mahesh Kumar</strong> ka personal support milta hai. The ₹500 and ₹1,500 plans are one-time payments; the Monthly Live Plan is ₹20,000 per month with a live class every day. Choose the plan that suits you:</p>
 
         <div class="plans">
           <div class="plan-card">
             <div class="plan-name">📩 Seekho Plan — SMS Support</div>
             <div class="plan-price">₹500 <small>one-time</small></div>
             <ul>
-              <li><strong>Full app</strong> — all lessons, 105 flashcards and the quiz, forever</li>
+              <li><strong>No ads — kabhi nahi</strong> — bina ruke, bina ad ke seekho</li>
               <li><strong>SMS / WhatsApp support</strong> — message your doubt, get the answer on chat</li>
               <li>Learn at your own speed, help is one message away</li>
             </ul>
@@ -572,7 +551,7 @@
             <div class="plan-name">🎥 Seekho Plan — Video Call Support</div>
             <div class="plan-price">₹1,500 <small>one-time</small></div>
             <ul>
-              <li><strong>Everything in the ₹500 plan</strong> — full app + SMS/WhatsApp support</li>
+              <li><strong>Everything in the ₹500 plan</strong> — no ads + SMS/WhatsApp support</li>
               <li><strong>2 live video calls — 30 minutes each</strong> — face-to-face help: pronunciation practice and doubts cleared live</li>
               <li>Both video call times are fixed with you on WhatsApp after payment</li>
             </ul>
@@ -582,7 +561,7 @@
             <div class="plan-name">📺 Monthly Live Plan — Daily Class</div>
             <div class="plan-price">₹20,000 <small>per month</small></div>
             <ul>
-              <li><strong>Everything in the ₹1,500 plan</strong> — full app + SMS/WhatsApp support</li>
+              <li><strong>Everything in the ₹1,500 plan</strong> — no ads + SMS/WhatsApp support</li>
               <li><strong>30-minute live video class every day for 1 month</strong> — roz practice with Mahesh Kumar</li>
               <li>Class time morning or evening, as scheduled with you on WhatsApp</li>
             </ul>
@@ -590,7 +569,7 @@
         </div>
 
         <div class="unlock-card" id="unlock-card">
-          <div class="unlock-price">₹500 / ₹1,500 / ₹20,000 <small>· पूरा ऐप + support</small></div>
+          <div class="unlock-price">₹500 / ₹1,500 / ₹20,000 <small>· no ads + support</small></div>
           <ol class="pay-steps">
             <li>
               <span class="step-title">Step 1 — Choose your plan and pay by UPI</span>
@@ -666,8 +645,8 @@
         </div>
 
         <div class="unlock-done" id="unlock-done" hidden>
-          <h3>✅ Full app unlocked!</h3>
-          <p>Badhaai ho! 🎉 Every lesson, flashcard and the quiz are now open. Start with Colors or jump straight to the phrases.</p>
+          <h3>✅ Badhaai ho — ads band!</h3>
+          <p>Ab tum bina kisi ad ke seekh sakte ho — saare lessons, flashcards aur quiz bina ruke chalenge. Start with Colors or jump straight to the phrases.</p>
           <p id="unlock-plan-line" style="font-weight:700;"></p>
           <div class="cta-row">
             <a class="btn btn-primary" href="#colors">Go to Lesson 3 — Colors</a>
@@ -698,6 +677,19 @@
         <div style="margin-top:4px;">Hindi Seekho App · Made &amp; taught by Mahesh Kumar · Learn a little every day — रोज़ थोड़ा-थोड़ा सीखो, जल्दी सीख जाओगे।</div>
         <div style="margin-top:6px;">Support on WhatsApp / Telegram is personally given by Mahesh Kumar.</div>
       </footer>
+    </div>
+
+    <div class="adx-overlay" id="adx-modal" hidden>
+      <div class="adx-modal" role="dialog" aria-modal="true" aria-labelledby="adx-title">
+        <button class="adx-x" id="adx-x" type="button" aria-label="Band karo">✕</button>
+        <h3 id="adx-title">Ek chhota sa ad 🙏</h3>
+        <p class="adx-note">Ad — isse app free chalti hai. Seekhna bilkul free hai, bas beech-beech me aise chhote ads aayenge. Plan lene par ads hamesha ke liye band ho jate hain.</p>
+        <div class="adx-adbox" id="adx-adbox">
+          <div id="container-f2aab14137246b166ffab0c2f48eb225"></div>
+          <p class="adx-adnote">Ad load hone me kabhi-kabhi thoda time lagta hai, ya ad khaali bhi aa sakta hai — koi baat nahi, neeche wala button hamesha kaam karega.</p>
+        </div>
+        <button class="btn btn-primary" id="adx-continue" type="button">Aage Badho →</button>
+      </div>
     </div>
 
     <div class="toast" id="toast" role="status"></div>
@@ -999,8 +991,11 @@
         flashEl.classList.remove("flipped");
       }
       flashEl.addEventListener("click", function () { flashEl.classList.toggle("flipped"); });
+      var flashSeen = 0;
       document.getElementById("flash-next").addEventListener("click", function () {
         flashIdx = (flashIdx + 1) % deck.length; showFlash();
+        flashSeen++;
+        if (flashSeen % 10 === 0) showInterstitial(null);
       });
       document.getElementById("flash-prev").addEventListener("click", function () {
         flashIdx = (flashIdx - 1 + deck.length) % deck.length; showFlash();
@@ -1124,6 +1119,9 @@
         again.textContent = "🔁 Play again (new questions)";
         again.addEventListener("click", buildQuiz);
         quizBox.appendChild(again);
+        /* Result ke baad free users ko ek chhota ad box — paid /
+           owner users ke liye showInterstitial khud skip kar deta hai. */
+        setTimeout(function () { showInterstitial(null); }, 900);
       }
       buildQuiz();
 
@@ -1328,6 +1326,95 @@
         });
       });
       if (isOwnerUnlocked()) applyOwnerUnlock();
+
+      /* ================= IN-BETWEEN ADS (FREE USERS ONLY) =================
+         Poori app sabke liye free hai — koi lesson, flashcard ya quiz
+         band nahi hai, aur ad dekhne se KUCH unlock nahi hota: koi
+         counter, koi reward, koi ad-free period nahi. Free users ko
+         seekhne ke BEECH me sirf teen jagah chhota ad box dikhta hai:
+         (1) lesson khatam karke agla lesson shuru karne se pehle,
+         (2) har 10 flashcards ke baad, (3) quiz ke result ke baad.
+         Free users ko har session me ads dikhte rahenge — ads band
+         karne ka ek hi tareeka hai: plan lena (approval flow) ya
+         Owner Login.
+         HARD RULE: paid / approved / owner users (body.unlocked —
+         wahi state jo approval flow aur Owner Login set karta hai)
+         ko KABHI koi ad nahi dikhta. showInterstitial sabse pehle
+         wahi state check karta hai; paid user ke liye na ad box
+         khulta hai, na koi ad script load hota hai.
+         Ad scripts (Adsterra Native Banner + Social Bar, GitHub site
+         ke units, Website ID 6231775) SIRF tab load hote hain jab
+         kisi free user ko pehli baar ad box dikhta hai — baaki poori
+         app me kahin koi ad code load nahi hota. */
+      var adxModal = document.getElementById("adx-modal");
+      var adxScriptsLoaded = false;
+      var adxOnContinue = null;
+
+      function isPaidUser() {
+        return document.body.classList.contains("unlocked");
+      }
+      function injectAdScripts() {
+        if (adxScriptsLoaded) return;
+        adxScriptsLoaded = true;
+        var box = document.getElementById("adx-adbox");
+        var s1 = document.createElement("script");
+        s1.async = true;
+        s1.setAttribute("fetchpriority", "high");
+        s1.setAttribute("data-cfasync", "false");
+        s1.src = "https://bauval.org/21/f2aab14137246b166ffab0c2f48eb225";
+        box.appendChild(s1);
+        var s2 = document.createElement("script");
+        s2.setAttribute("data-cfasync", "false");
+        s2.src = "https://bauval.org/14/b26c99f8ab4002c619dc2e982f8e61aa";
+        box.appendChild(s2);
+      }
+      function showInterstitial(onContinue) {
+        if (isPaidUser()) {
+          if (onContinue) onContinue();
+          return;
+        }
+        adxOnContinue = onContinue || null;
+        injectAdScripts();
+        adxModal.hidden = false;
+        document.body.style.overflow = "hidden";
+      }
+      function closeInterstitial() {
+        adxModal.hidden = true;
+        document.body.style.overflow = "";
+        var cb = adxOnContinue;
+        adxOnContinue = null;
+        if (cb) cb();
+      }
+      document.getElementById("adx-continue").addEventListener("click", closeInterstitial);
+      document.getElementById("adx-x").addEventListener("click", closeInterstitial);
+      adxModal.addEventListener("click", function (ev) { if (ev.target === adxModal) closeInterstitial(); });
+      document.addEventListener("keydown", function (ev) {
+        if (ev.key === "Escape" && !adxModal.hidden) closeInterstitial();
+      });
+
+      /* Lesson khatam wala button: free user ko pehle ad box, phir
+         agla lesson; paid user seedha agle lesson par jata hai. */
+      var nextBtns = document.querySelectorAll(".lesson-next-btn");
+      for (var nbi = 0; nbi < nextBtns.length; nbi++) {
+        nextBtns[nbi].addEventListener("click", function () {
+          var target = this.getAttribute("data-next");
+          showInterstitial(function () {
+            var sec = document.querySelector(target);
+            if (sec) sec.scrollIntoView({ behavior: "smooth" });
+          });
+        });
+      }
+
+      /* Purane ad-unlock model ki bachi hui localStorage keys saaf
+         kar do — ab ad se kuch unlock hota hi nahi hai. */
+      try {
+        var staleKeys = [];
+        for (var ski = 0; ski < localStorage.length; ski++) {
+          var sk = localStorage.key(ski);
+          if (sk && sk.indexOf("hindiSeekhoAdUnlock_") === 0) staleKeys.push(sk);
+        }
+        for (var sri = 0; sri < staleKeys.length; sri++) localStorage.removeItem(staleKeys[sri]);
+      } catch (e) { /* storage blocked — koi baat nahi */ }
 
       /* ================= NAV HIGHLIGHT ================= */
       var navLinks = document.querySelectorAll(".navlink");
