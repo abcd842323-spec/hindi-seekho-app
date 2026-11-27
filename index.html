@@ -357,6 +357,15 @@
       .unlock-done h3 { font-family: "Baloo 2", sans-serif; margin: 0 0 6px; font-size: 1.35rem; color: var(--green-ok); }
       .unlock-done p { margin: 0 0 14px; }
 
+      /* ---------- Owner login ---------- */
+      body.unlocked .owner-card { display: none; }
+      .owner-card {
+        background: var(--surface); border: 2px solid var(--teal); border-radius: 18px;
+        padding: 24px; box-shadow: var(--shadow); max-width: 640px; margin-top: 18px;
+      }
+      .owner-card h3 { font-family: "Baloo 2", sans-serif; margin: 0 0 6px; font-size: 1.3rem; color: var(--teal-deep); }
+      .owner-card p { color: var(--ink-soft); margin: 0 0 6px; max-width: 48ch; }
+
       .blogger-note {
         margin-top: 52px; background: var(--surface-2); border: 2px dashed var(--saffron);
         border-radius: 16px; padding: 18px 20px;
@@ -670,6 +679,23 @@
             <a class="btn btn-primary" href="#colors">Go to Lesson 3 — Colors</a>
             <a class="btn btn-ghost" href="#phrases">Learn Phrases</a>
           </div>
+        </div>
+
+        <div class="owner-card" id="owner-card">
+          <h3>👑 Owner Login</h3>
+          <p>Ye section sirf app ke owner ke liye hai. Apni Gmail aur password daalo — poora app isi device par unlock ho jayega, bilkul approved buyer ki tarah.</p>
+          <form class="req-form" id="owner-form">
+            <div class="field">
+              <label for="owner-email">Owner Gmail</label>
+              <input id="owner-email" type="email" placeholder="e.g. aapki@gmail.com" autocomplete="username" />
+            </div>
+            <div class="field">
+              <label for="owner-pass">Password</label>
+              <input id="owner-pass" type="password" placeholder="Apna password daalo" autocomplete="current-password" />
+            </div>
+            <button class="btn btn-primary" type="submit" id="owner-submit">Owner Login</button>
+          </form>
+          <p class="code-msg" id="owner-msg" role="status"></p>
         </div>
       </section>
 
@@ -1143,6 +1169,7 @@
       var fbListening = false;
 
       function applyAccess(data) {
+        if (isOwnerUnlocked()) { applyOwnerUnlock(); return; }
         if (!data) {
           if (!document.body.classList.contains("unlocked")) showAccessState("form");
           return;
@@ -1188,6 +1215,10 @@
           firebase.auth().onAuthStateChanged(function (user) {
             if (user) {
               fbUid = user.uid;
+              if (user.email && user.email.toLowerCase() === OWNER_EMAIL) {
+                try { localStorage.setItem(OWNER_FLAG_KEY, "1"); } catch (e) {}
+                applyOwnerUnlock();
+              }
               startAccessListener();
             } else {
               firebase.auth().signInAnonymously().catch(function () {
@@ -1250,6 +1281,64 @@
         showAccessState("form");
         accessCard.scrollIntoView({ behavior: "smooth", block: "center" });
       });
+
+      /* ================= OWNER LOGIN =================
+         Owner apni Gmail + password se Firebase Auth par sign in
+         karke isi device par poora app unlock kar sakta hai —
+         bilkul waisa hi unlocked state jo ek approved buyer ko
+         milta hai. Password page ke code me kahin nahi hai; wo
+         sirf Firebase Auth me rehta hai. Unlocked flag localStorage
+         me save hota hai, taaki dobara kholne par bhi app khula rahe. */
+      var OWNER_EMAIL = "abcd842323@gmail.com";
+      var OWNER_FLAG_KEY = "hindiSeekhoOwnerUnlocked";
+      function isOwnerUnlocked() {
+        try { return localStorage.getItem(OWNER_FLAG_KEY) === "1"; } catch (e) { return false; }
+      }
+      function applyOwnerUnlock() {
+        var wasUnlocked = document.body.classList.contains("unlocked");
+        document.body.classList.add("unlocked");
+        showAccessState("done");
+        document.getElementById("unlock-plan-line").textContent = "Owner mode — full app unlocked";
+        if (!wasUnlocked) toast("👑 Owner mode — full app unlocked!");
+      }
+      document.getElementById("owner-form").addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        var msg = document.getElementById("owner-msg");
+        var email = document.getElementById("owner-email").value.replace(/\s+/g, "").trim().toLowerCase();
+        var pass = document.getElementById("owner-pass").value;
+        function fail(text) {
+          msg.textContent = text;
+          msg.className = "code-msg err";
+        }
+        if (!email || !pass) { fail("Galat ID ya password, dobara try karein."); return; }
+        if (typeof firebase === "undefined" || !firebase.auth) {
+          fail("Internet connection check karke dobara try karein.");
+          return;
+        }
+        var btn = document.getElementById("owner-submit");
+        btn.disabled = true;
+        btn.textContent = "Check ho raha hai…";
+        msg.textContent = "";
+        firebase.auth().signInWithEmailAndPassword(email, pass).then(function (cred) {
+          btn.disabled = false;
+          btn.textContent = "Owner Login";
+          if (cred.user && cred.user.email && cred.user.email.toLowerCase() === OWNER_EMAIL) {
+            try { localStorage.setItem(OWNER_FLAG_KEY, "1"); } catch (e) { /* storage blocked — is session ke liye unlock ho jayega */ }
+            msg.textContent = "";
+            msg.className = "code-msg";
+            applyOwnerUnlock();
+            document.getElementById("unlock-done").scrollIntoView({ behavior: "smooth", block: "center" });
+          } else {
+            firebase.auth().signOut().catch(function () {});
+            fail("Galat ID ya password, dobara try karein.");
+          }
+        }).catch(function () {
+          btn.disabled = false;
+          btn.textContent = "Owner Login";
+          fail("Galat ID ya password, dobara try karein.");
+        });
+      });
+      if (isOwnerUnlocked()) applyOwnerUnlock();
 
       /* ================= NAV HIGHLIGHT ================= */
       var navLinks = document.querySelectorAll(".navlink");
