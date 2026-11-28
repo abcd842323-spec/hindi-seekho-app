@@ -378,6 +378,31 @@
       .unlock-done h3 { font-family: "Baloo 2", sans-serif; margin: 0 0 6px; font-size: 1.35rem; color: var(--green-ok); }
       .unlock-done p { margin: 0 0 14px; }
 
+      /* ---------- Free-user save / login box ---------- */
+      .save-box {
+        background: var(--surface); border: 2px solid var(--teal); border-radius: 18px;
+        padding: 18px 20px; box-shadow: var(--shadow); margin-top: 22px;
+        display: grid; gap: 6px;
+      }
+      .save-box h2 { font-family: "Baloo 2", sans-serif; margin: 0; font-size: 1.25rem; color: var(--teal-deep); }
+      .save-box p { margin: 0; color: var(--ink-soft); max-width: 62ch; }
+      .save-form { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+      .save-form input {
+        flex: 1 1 240px; font-size: 1.02rem; font-weight: 600; padding: 11px 14px; border-radius: 12px;
+        border: 2px solid var(--line); background: var(--bg); color: var(--ink); min-height: 48px; font-family: inherit;
+      }
+      .save-form input:focus { outline: none; border-color: var(--saffron); }
+      .save-form button:disabled { opacity: 0.6; cursor: wait; }
+      .save-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+      .save-chip {
+        background: var(--teal-soft); color: var(--teal-deep); border: 1.5px solid var(--teal);
+        border-radius: 999px; padding: 5px 13px; font-size: 0.88rem; font-weight: 700;
+      }
+      .save-user-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 8px; }
+      .save-user-row .save-email { font-weight: 700; word-break: break-all; }
+      .save-note { font-size: 0.85rem; color: var(--ink-soft); }
+      .save-box [hidden] { display: none !important; }
+
       /* ---------- Owner login ---------- */
       body.unlocked .owner-card { display: none; }
       .owner-card {
@@ -427,6 +452,29 @@
     </nav>
 
     <div class="wrap">
+      <!-- FREE USER LOGIN — progress save (Email Link, no password) -->
+      <div class="save-box" id="save-box">
+        <h2>💾 Apni progress save karo</h2>
+        <p id="save-desc">Apna Gmail daalo — aapki progress save rahegi. Hum aapko ek login link mail karenge; link par tap karte hi login ho jayega, <strong>koi password nahi chahiye</strong>. Phone badlo ya browser ka data clear ho jaye, to bhi aapke lessons, flashcards aur quiz score wapas mil jayenge. Login na karo to bhi poori app free chalegi — bas progress isi phone me rahegi.</p>
+        <form class="save-form" id="save-form">
+          <input id="save-email" type="email" placeholder="Apna Gmail daalo, e.g. priya@gmail.com" autocomplete="email" aria-label="Apna Gmail daalo" />
+          <button class="btn btn-primary" type="submit" id="save-submit">Login Link Bhejo</button>
+        </form>
+        <p class="code-msg" id="save-msg" role="status"></p>
+        <div id="save-loggedin" hidden>
+          <div class="save-user-row">
+            <span>✅ Login ho gaya — <span class="save-email" id="save-user-email"></span></span>
+            <button class="btn btn-ghost btn-small" type="button" id="save-logout">Logout</button>
+          </div>
+          <p class="save-note">Aapki progress ab is Gmail ke saath save ho rahi hai — kisi bhi phone par isi Gmail se login karne par wapas mil jayegi.</p>
+        </div>
+        <div class="save-chips" id="save-chips" hidden>
+          <span class="save-chip" id="chip-lessons">Lessons khatam: 0 / 5</span>
+          <span class="save-chip" id="chip-flash">Flashcards dekhe: 0</span>
+          <span class="save-chip" id="chip-quiz">Quiz best score: 0 / 10</span>
+        </div>
+      </div>
+
       <header class="hero">
         <div>
           <div class="maker-badge"><span class="maker-dot" aria-hidden="true"></span>By <strong>Mahesh Kumar</strong> · your Hindi teacher</div>
@@ -1003,6 +1051,7 @@
       document.getElementById("flash-next").addEventListener("click", function () {
         flashIdx = (flashIdx + 1) % deck.length; showFlash();
         flashSeen++;
+        recordFlashSeen();
         if (flashSeen % 10 === 0) showInterstitial(null);
       });
       document.getElementById("flash-prev").addEventListener("click", function () {
@@ -1183,6 +1232,7 @@
         again.textContent = "🔁 Play again (new questions)";
         again.addEventListener("click", buildQuiz);
         quizBox.appendChild(again);
+        recordQuizResult(quizScore);
         /* Result ke baad free users ko ek chhota ad box — paid /
            owner users ke liye showInterstitial khud skip kar deta hai. */
         setTimeout(function () { showInterstitial(null); }, 900);
@@ -1271,6 +1321,7 @@
                 applyOwnerUnlock();
               }
               startAccessListener();
+              onSaveUserReady(user);
             } else {
               firebase.auth().signInAnonymously().catch(function () {
                 /* Anonymous sign-in failed — form submit will report it. */
@@ -1461,6 +1512,7 @@
       var nextBtns = document.querySelectorAll(".lesson-next-btn");
       for (var nbi = 0; nbi < nextBtns.length; nbi++) {
         nextBtns[nbi].addEventListener("click", function () {
+          recordLessonDone(this);
           var target = this.getAttribute("data-next");
           showInterstitial(function () {
             var sec = document.querySelector(target);
@@ -1479,6 +1531,291 @@
         }
         for (var sri = 0; sri < staleKeys.length; sri++) localStorage.removeItem(staleKeys[sri]);
       } catch (e) { /* storage blocked — koi baat nahi */ }
+
+      /* ================= FREE USER LOGIN + PROGRESS SAVE =================
+         Free users ke liye Firebase Email Link sign-in — KOI password
+         nahi. User upar wale box me Gmail daalta hai, mail me aaye link
+         par tap karta hai, aur login ho jata hai.
+         App pehle anonymous Auth UID par chalti hai; mail wala link
+         khulte hi usi anonymous user ko linkWithCredential se email
+         login se LINK kar diya jata hai — UID wahi rehta hai, isliye
+         anonymous time ki progress (jo isi UID par Firestore me save
+         hoti rahi hai) apne aap bach jati hai. Agar link kisi wajah se
+         fail ho jaye (credential pehle se kisi aur account par hai),
+         to seedha signInWithEmailLink se login hota hai aur is device
+         ki progress naye UID par merge karke save ho jati hai.
+         Progress Firestore me: users/{uid}/progress/main —
+         lessonsDone (array of lesson ids), flashcardsSeen (count),
+         quizBestScore, email, lastOpened + updatedAt.
+         NOTE (Firestore rules): rules me users/{uid} ke neeche user ko
+         SIRF apna data padhne/likhne ki permission honi chahiye
+         (request.auth.uid == uid). Abhi ke rules ~20 Dec 2026 ko
+         expire hote hain — usse pehle Firebase console me rules renew
+         karne honge, warna progress save hona band ho jayega (app aur
+         lessons phir bhi chalte rahenge).
+         Login na karne par app poori free chalti hai — progress sirf
+         anonymous UID par save hoti hai (phone/browser badla to gayi).
+         Paid / owner flow isse bilkul alag hai aur unchanged hai. */
+      var SAVE_EMAIL_KEY = "hindiSeekhoEmailForSignIn";
+      var progress = { lessonsDone: [], flashcardsSeen: 0, quizBestScore: 0 };
+      var progressUid = null;
+      var progressLoadedFor = null;
+      var saveTimer = null;
+      var saveLinkBusy = false;
+
+      /* Agar page ek email sign-in link se khula hai, to us link ko
+         yaad rakho — Auth ready hote hi use poora kiya jayega.
+         Firebase ko link me sirf query params (mode + oobCode)
+         chahiye hote hain, isliye link app ke asal public address
+         par wahi query jod kar banta hai. */
+      var APP_PUBLIC_URL = "https://abcd842323-spec.github.io/hindi-seekho-app/";
+      function currentPageLink() {
+        return APP_PUBLIC_URL + window.location.search;
+      }
+      var pendingEmailLink = null;
+      try {
+        if (typeof firebase !== "undefined" && firebase.auth && firebase.auth().isSignInWithEmailLink(currentPageLink())) {
+          pendingEmailLink = currentPageLink();
+        }
+      } catch (e) { pendingEmailLink = null; }
+
+      function progressDocRef() {
+        if (!fbDb || !fbUid) return null;
+        return fbDb.collection("users").doc(fbUid).collection("progress").doc("main");
+      }
+      function updateSaveChips() {
+        var chips = document.getElementById("save-chips");
+        if (!chips) return;
+        document.getElementById("chip-lessons").textContent = "Lessons khatam: " + progress.lessonsDone.length + " / 5";
+        document.getElementById("chip-flash").textContent = "Flashcards dekhe: " + progress.flashcardsSeen;
+        document.getElementById("chip-quiz").textContent = "Quiz best score: " + progress.quizBestScore + " / 10";
+        chips.hidden = !(progress.lessonsDone.length || progress.flashcardsSeen || progress.quizBestScore);
+      }
+      function saveProgressNow() {
+        var ref = progressDocRef();
+        if (!ref || typeof firebase === "undefined" || !firebase.firestore) return;
+        var user = null;
+        try { user = firebase.auth().currentUser; } catch (e) {}
+        ref.set({
+          lessonsDone: progress.lessonsDone,
+          flashcardsSeen: progress.flashcardsSeen,
+          quizBestScore: progress.quizBestScore,
+          email: (user && user.email) ? user.email : null,
+          lastOpened: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true }).catch(function () {
+          /* Rules / offline — progress is session me memory me hai,
+             agli save koshish par dobara try hoga. */
+        });
+      }
+      function saveProgress() {
+        updateSaveChips();
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(saveProgressNow, 700);
+      }
+      function loadProgress() {
+        var ref = progressDocRef();
+        if (!ref || progressLoadedFor === fbUid) return;
+        progressLoadedFor = fbUid;
+        ref.get().then(function (snap) {
+          if (snap.exists) {
+            var d = snap.data() || {};
+            if (d.lessonsDone && d.lessonsDone.length) {
+              d.lessonsDone.forEach(function (id) {
+                if (progress.lessonsDone.indexOf(id) === -1) progress.lessonsDone.push(id);
+              });
+            }
+            if (typeof d.flashcardsSeen === "number") progress.flashcardsSeen = Math.max(progress.flashcardsSeen, d.flashcardsSeen);
+            if (typeof d.quizBestScore === "number") progress.quizBestScore = Math.max(progress.quizBestScore, d.quizBestScore);
+          }
+          updateSaveChips();
+          saveProgressNow(); /* lastOpened stamp + local progress merge */
+        }).catch(function () {
+          updateSaveChips();
+        });
+      }
+      function recordLessonDone(btn) {
+        var sec = btn;
+        while (sec && sec.tagName !== "SECTION") sec = sec.parentElement;
+        if (!sec || !sec.id) return;
+        if (progress.lessonsDone.indexOf(sec.id) === -1) {
+          progress.lessonsDone.push(sec.id);
+          saveProgress();
+        }
+      }
+      function recordFlashSeen() {
+        progress.flashcardsSeen++;
+        saveProgress();
+      }
+      function recordQuizResult(score) {
+        if (score > progress.quizBestScore) {
+          progress.quizBestScore = score;
+          saveProgress();
+        } else {
+          updateSaveChips();
+        }
+      }
+
+      /* ---------- Login box UI states ---------- */
+      function setSaveMsg(text, ok) {
+        var msg = document.getElementById("save-msg");
+        msg.textContent = text;
+        msg.className = "code-msg " + (ok ? "ok" : "err");
+      }
+      function refreshSaveBox(user) {
+        var form = document.getElementById("save-form");
+        var logged = document.getElementById("save-loggedin");
+        var desc = document.getElementById("save-desc");
+        var submit = document.getElementById("save-submit");
+        if (user && user.email && !user.isAnonymous) {
+          form.hidden = true;
+          logged.hidden = false;
+          document.getElementById("save-user-email").textContent = user.email;
+          desc.textContent = "Aap login ho — jo bhi seekhoge, wo is Gmail ke saath save hota rahega.";
+        } else {
+          logged.hidden = true;
+          form.hidden = false;
+          if (pendingEmailLink) {
+            desc.textContent = "Bas ek step baki hai — neeche wahi Gmail daalo jo aapne login link ke liye diya tha, phir “Login Poora Karo” dabao. Koi password nahi chahiye.";
+            submit.textContent = "Login Poora Karo";
+          } else {
+            submit.textContent = "Login Link Bhejo";
+          }
+        }
+        updateSaveChips();
+      }
+
+      /* Auth ready hone par (paid-access wala onAuthStateChanged
+         yahan call karta hai): progress load karo, box update karo,
+         aur agar page email link se khula hai to login poora karo. */
+      function onSaveUserReady(user) {
+        if (progressUid !== user.uid) {
+          progressUid = user.uid;
+          progressLoadedFor = null;
+          if (!user.email) { /* naya anonymous session — purane user ki progress mix na ho */
+            progress = { lessonsDone: [], flashcardsSeen: 0, quizBestScore: 0 };
+          }
+        }
+        refreshSaveBox(user);
+        loadProgress();
+        if (pendingEmailLink && !saveLinkBusy) {
+          var storedEmail = null;
+          try { storedEmail = localStorage.getItem(SAVE_EMAIL_KEY); } catch (e) {}
+          if (user.email && !user.isAnonymous) {
+            /* Isi account par pehle se login hai — link saaf karke aage badho. */
+            pendingEmailLink = null;
+            cleanEmailLinkUrl();
+            refreshSaveBox(user);
+          } else if (storedEmail) {
+            completeEmailLink(storedEmail);
+          } else {
+            /* Email is device par save nahi hai (dusre device par link
+               khula hoga) — box confirm mode me hai; user Gmail daalega
+               to wahi form login poora kar dega. */
+            refreshSaveBox(user);
+            document.getElementById("save-box").scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        }
+      }
+      function cleanEmailLinkUrl() {
+        /* Link ka code ek hi baar chalta hai; login ke baad wo
+           apne aap bekaar ho jata hai, isliye URL saaf karne ke
+           liye koi extra step nahi chahiye. */
+      }
+      function finishEmailLogin(user, linked) {
+        saveLinkBusy = false;
+        pendingEmailLink = null;
+        try { localStorage.removeItem(SAVE_EMAIL_KEY); } catch (e) {}
+        cleanEmailLinkUrl();
+        progressLoadedFor = null;
+        loadProgress();
+        saveProgressNow();
+        refreshSaveBox(user);
+        setSaveMsg("", true);
+        toast(linked
+          ? "✅ Login ho gaya! Purani progress bhi isi Gmail ke saath jud gayi hai."
+          : "✅ Login ho gaya! Aapki progress ab save hogi.");
+        document.getElementById("save-box").scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      function completeEmailLink(email) {
+        if (saveLinkBusy || !pendingEmailLink) return;
+        if (typeof firebase === "undefined" || !firebase.auth) return;
+        saveLinkBusy = true;
+        setSaveMsg("Login ho raha hai… ek second.", true);
+        var auth = firebase.auth();
+        var current = auth.currentUser;
+        function fallbackSignIn() {
+          auth.signInWithEmailLink(email, pendingEmailLink).then(function (cred) {
+            finishEmailLogin(cred.user, false);
+          }).catch(function () {
+            saveLinkBusy = false;
+            setSaveMsg("Login link purana ya galat hai. Neeche apna Gmail daalkar naya link bhej lo.", false);
+            pendingEmailLink = null;
+            refreshSaveBox(auth.currentUser);
+          });
+        }
+        if (current && current.isAnonymous) {
+          var cred = firebase.auth.EmailAuthProvider.credentialWithLink(email, pendingEmailLink);
+          current.linkWithCredential(cred).then(function (userCred) {
+            finishEmailLogin(userCred.user, true);
+          }).catch(function () {
+            /* Credential pehle se kisi account par hai, ya link
+               purana hai — seedha email-link sign-in try karo;
+               is device ki progress finishEmailLogin me merge ho
+               jayegi (loadProgress + saveProgressNow). */
+            fallbackSignIn();
+          });
+        } else if (current && current.email && current.email.toLowerCase() === email.toLowerCase()) {
+          finishEmailLogin(current, true);
+        } else {
+          fallbackSignIn();
+        }
+      }
+
+      document.getElementById("save-form").addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        var email = document.getElementById("save-email").value.replace(/\s+/g, "").trim().toLowerCase();
+        if (email.indexOf("@") < 1 || email.indexOf(".") < email.indexOf("@") + 2 || email.lastIndexOf(".") >= email.length - 1) {
+          setSaveMsg("Sahi Gmail daalo, e.g. priya@gmail.com", false);
+          return;
+        }
+        /* Link khula hua hai aur email confirm karna hai — login poora karo. */
+        if (pendingEmailLink) { completeEmailLink(email); return; }
+        if (typeof firebase === "undefined" || !firebase.auth) {
+          setSaveMsg("Internet connection check karke dobara try karo.", false);
+          return;
+        }
+        var btn = document.getElementById("save-submit");
+        btn.disabled = true;
+        btn.textContent = "Link bheja ja raha hai…";
+        /* Continue URL hamesha app ka asal public address hai —
+           Firebase console me yahi domain (abcd842323-spec.github.io)
+           authorized hai, isliye mail wala link seedha app par khulta hai. */
+        var continueUrl = APP_PUBLIC_URL;
+        firebase.auth().sendSignInLinkToEmail(email, { url: continueUrl, handleCodeInApp: true }).then(function () {
+          btn.disabled = false;
+          btn.textContent = "Login Link Bhejo";
+          try { localStorage.setItem(SAVE_EMAIL_KEY, email); } catch (e) { /* dusre device par khologe to Gmail dobara daalna hoga */ }
+          setSaveMsg("✅ Login link " + email + " par bhej diya gaya hai. Apna Gmail kholo aur link par tap karo — koi password nahi lagega. Link isi phone/browser me khologe to purani progress bhi jud jayegi.", true);
+          toast("📩 Login link bhej diya gaya — Gmail check karo!");
+        }).catch(function () {
+          btn.disabled = false;
+          btn.textContent = "Login Link Bhejo";
+          setSaveMsg("Link nahi bheja ja saka. Internet check karke dobara try karo.", false);
+        });
+      });
+
+      document.getElementById("save-logout").addEventListener("click", function () {
+        if (typeof firebase === "undefined" || !firebase.auth) return;
+        firebase.auth().signOut().then(function () {
+          progress = { lessonsDone: [], flashcardsSeen: 0, quizBestScore: 0 };
+          progressUid = null;
+          progressLoadedFor = null;
+          updateSaveChips();
+          toast("Logout ho gaya. App free me chalta rahega — progress save karne ke liye dobara login kar lena.");
+        }).catch(function () {});
+      });
+      updateSaveChips();
 
       /* ================= NAV HIGHLIGHT ================= */
       var navLinks = document.querySelectorAll(".navlink");
