@@ -742,7 +742,7 @@
         <p class="adx-note">Ad — isse app free chalti hai. Seekhna bilkul free hai, bas beech-beech me aise chhote ads aayenge. Plan lene par ads hamesha ke liye band ho jate hain.</p>
         <div class="adx-adbox" id="adx-adbox">
           <div id="container-f2aab14137246b166ffab0c2f48eb225"></div>
-          <p class="adx-adnote">Ad load hone me kabhi-kabhi thoda time lagta hai, ya ad khaali bhi aa sakta hai — koi baat nahi, neeche wala button hamesha kaam karega.</p>
+          <p class="adx-adnote">Ad load hone me kabhi-kabhi thoda time lagta hai, ya ad khaali bhi aa sakta hai — 3 second rukne ke baad neeche wala button kaam karega.</p>
         </div>
         <button class="btn btn-primary" id="adx-continue" type="button">Aage Badho →</button>
       </div>
@@ -1289,6 +1289,14 @@
           document.getElementById("waiting-detail").textContent =
             "Name: " + (data.name || "") + " · Plan: " + (data.plan || "");
         }
+        /* Access state tay ho gaya: free user hai to ad scripts abhi
+           se preload kar lo — Social Bar lesson page par bina tap ke
+           dikhne lagega, aur Native Banner modal khulte hi ready
+           rahega (pehla ad late/khaali nahi aayega). Paid/owner user
+           (body.unlocked) ke liye kabhi preload nahi hota; auth fail
+           hone par ye line chalti hi nahi aur modal wala fallback
+           kaam karta rehta hai. */
+        if (!isPaidUser()) injectAdScripts();
       }
 
       function startAccessListener() {
@@ -1458,12 +1466,24 @@
          wahi state check karta hai; paid user ke liye na ad box
          khulta hai, na koi ad script load hota hai.
          Ad scripts (Adsterra Native Banner + Social Bar, GitHub site
-         ke units, Website ID 6231775) SIRF tab load hote hain jab
-         kisi free user ko pehli baar ad box dikhta hai — baaki poori
-         app me kahin koi ad code load nahi hota. */
+         ke units, Website ID 6231775) free user ke liye access state
+         tay hote hi preload ho jate hain (applyAccess ke end me) —
+         Social Bar lesson page par bina tap ke dikhne lagta hai aur
+         Native Banner modal khulte hi ready rehta hai. Auth fail ho
+         to preload nahi hota aur modal khulte waqt wahi scripts load
+         hote hain (fallback). Baaki poori app me kahin aur koi ad
+         code load nahi hota.
+         Modal khulte hi 3 second ka hold hota hai — "Aage Badho" aur
+         ✕ dono band rehte hain aur countdown dikhta hai — taaki ad
+         dikhe bina user turant band na kar de. 3 second ke baad
+         buttons phir se kaam karte hain. */
       var adxModal = document.getElementById("adx-modal");
       var adxScriptsLoaded = false;
       var adxOnContinue = null;
+      var adxContinueBtn = document.getElementById("adx-continue");
+      var adxCloseBtn = document.getElementById("adx-x");
+      var adxHoldTimer = null;
+      var adxHoldLeft = 0;
 
       function isPaidUser() {
         return document.body.classList.contains("unlocked");
@@ -1483,6 +1503,31 @@
         s2.src = "https://bauval.org/14/b26c99f8ab4002c619dc2e982f8e61aa";
         box.appendChild(s2);
       }
+      /* 3-second hold: modal khulte hi dono buttons band + countdown.
+         Hold ke dauraan closeInterstitial kuch nahi karta, isliye
+         ✕, overlay tap aur Escape bhi 3 second tak band rehte hain. */
+      function adxEndHold() {
+        if (adxHoldTimer) { clearInterval(adxHoldTimer); adxHoldTimer = null; }
+        adxHoldLeft = 0;
+        adxContinueBtn.disabled = false;
+        adxCloseBtn.disabled = false;
+        adxContinueBtn.textContent = "Aage Badho →";
+      }
+      function adxStartHold() {
+        adxEndHold();
+        adxHoldLeft = 3;
+        adxContinueBtn.disabled = true;
+        adxCloseBtn.disabled = true;
+        adxContinueBtn.textContent = "Aage Badho → (3)";
+        adxHoldTimer = setInterval(function () {
+          adxHoldLeft -= 1;
+          if (adxHoldLeft <= 0) {
+            adxEndHold();
+          } else {
+            adxContinueBtn.textContent = "Aage Badho → (" + adxHoldLeft + ")";
+          }
+        }, 1000);
+      }
       function showInterstitial(onContinue) {
         if (isPaidUser()) {
           if (onContinue) onContinue();
@@ -1492,16 +1537,19 @@
         injectAdScripts();
         adxModal.hidden = false;
         document.body.style.overflow = "hidden";
+        adxStartHold();
       }
       function closeInterstitial() {
+        if (adxHoldLeft > 0) return; /* 3-second hold — pehle ad dikhne do. */
+        adxEndHold();
         adxModal.hidden = true;
         document.body.style.overflow = "";
         var cb = adxOnContinue;
         adxOnContinue = null;
         if (cb) cb();
       }
-      document.getElementById("adx-continue").addEventListener("click", closeInterstitial);
-      document.getElementById("adx-x").addEventListener("click", closeInterstitial);
+      adxContinueBtn.addEventListener("click", closeInterstitial);
+      adxCloseBtn.addEventListener("click", closeInterstitial);
       adxModal.addEventListener("click", function (ev) { if (ev.target === adxModal) closeInterstitial(); });
       document.addEventListener("keydown", function (ev) {
         if (ev.key === "Escape" && !adxModal.hidden) closeInterstitial();
